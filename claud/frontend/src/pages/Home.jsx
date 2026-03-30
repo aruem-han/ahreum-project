@@ -7,11 +7,11 @@ export default function Home() {
   const [stations, setStations] = useState([])
   const [insight, setInsight] = useState(null)
   const [loading, setLoading] = useState(true)
-
+                     
   useEffect(() => {
     getFavorites().then(data => {
-      setStations(data)
-      setLoading(false)
+      setStations(data)                   
+      setLoading(false)                                               
     })
     getAiInsight({ userQuery: '지금 전반적으로 어떤 상황이야?' })
       .then(data => setInsight(data.message))

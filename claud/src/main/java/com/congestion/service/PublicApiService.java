@@ -21,30 +21,34 @@ public class PublicApiService {
 
     //서울 지하철 실시간 혼잡도 api호출
 
-    public int fetchSeoulSubwayCongestion(String stationCode, String line) {
-        String url = "http://swopenapi.seoul.go.kr/api/subway/%s/json/realtimeStationArrival/0/10/%s"
-        .formatted(seoulKey, stationCode);
+    private static final String BASE_URL =
+        "http://swopenapi.seoul.go.kr/api/subway/%s/json/realtimeStationArrival/0/10/%s";
+
+        public List<Map<String, Object>> fetchSubwayCongestion(String stationName) {
+            String url = String.format(BASE_URL, seoulKey, stationName);
 
         try{
             Map response = restTemplate.getForObject(url, Map.class);
-            
-            // 혼잡도 필드 추출 
-            List<Map<String, Object>> rows =
-                (List<Map<String, Object>>) ((Map) response.get("realtimeArrivalList")).get("row");
+            if (response == null) return List.of();
 
-               if (rows != null && !rows.isEmpty()) {
-                Object trainStatus = rows.get(0).get("trainLineNm");
-                // 혼잡도 파싱 로직 (API 응답 구조에 맞게 조정 필요)
-                return parseCongestionRate(rows.get(0));
+            //에러 
+            Map errorMsg = (Map) response.get("errorMessage");
+            if(errorMsg!=null) {
+                String code = (String) errorMsg.get("code");
+                    if (!"INFO-000".equals(code)) {
+                    log.warn("API 오류: {}", errorMsg.get("message"));
+                    return List.of();
+                }
             }
 
+            List<Map<String, Object>> arrivals = (List<Map<String, Object>>) response.get("realtimeArrivalList");
+            return arrivals != null ? arrivals : List.of();
+           
         } catch (Exception e) {
             log.error("서울 지하철 혼잡도 API 호출 실패: {}", e.getMessage());
+            return List.of();
         }
-
-          return estimateCongestion();
     }
-
 
     // 기상청 날씨 api 호출
     public String fetchWeather() {
@@ -57,20 +61,38 @@ public class PublicApiService {
         }
     }
 
+    public int estimateCongestion(String stationName) {
+        List<Map<String, Object>> arrivals = fetchSubwayCongestion(stationName);
+        
+        if (arrivals.isEmpty()) {
+            return estimateByTime();  // API 실패 시 시간대 기반 추정
+        }
 
-    private int parseCongestionRate(Map<String, Object> apiResponse) {
-        // API 응답에서 혼잡도 정보를 추출하는 로직 구현
-        // 예시: apiResponse.get("congestionRate") 등
-        return 0; // 실제 혼잡도 값으로 대체
-    
-    
+        long arrivingSoon = arrivals.stream()
+            .filter(a -> {
+                Object barvlDt = a.get("barvlDt");
+                if (barvlDt == null) return false;
+                int seconds = Integer.parseInt(barvlDt.toString());
+                return seconds <= 300; // 5분 이내 도착
+            })
+            .count();
+
+        int hour = java.time.LocalTime.now().getHour();
+        boolean isPeak = (hour >= 7 && hour <= 9) || (hour >= 18 && hour <= 20);
+
+        if (isPeak && arrivingSoon >= 2) return 85;
+        if (isPeak && arrivingSoon == 1) return 70;
+        if (!isPeak && arrivingSoon >= 2) return 45;
+        if (!isPeak && arrivingSoon == 1) return 30;
+        return estimateByTime();
     }
-
-    private int estimateCongestion() {
-        // API 호출 실패 시 혼잡도를 추정하는 로직 구현
-        // 예시: 과거 데이터 기반 평균값 반환 등
-        return 50; // 예시로 50% 혼잡도 반환
+    
+     // API 실패 시 시간대 기반 추정
+    public int estimateByTime() {
+        int hour = java.time.LocalTime.now().getHour();
+        if ((hour >= 7 && hour <= 9) || (hour >= 18 && hour <= 20)) return 80;
+        if (hour >= 10 && hour <= 17) return 40;
+        return 25;
     }
-
     
 }
