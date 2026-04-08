@@ -11,10 +11,7 @@ export const searchStations = (q) =>
  
 export const getCongestion = (stationId) =>
   api.get(`/congestion/${stationId}`).then(r => r.data)
- 
-// export const getAiInsight = (body) =>
-//   api.post('/ai/insight', body).then(r => r.data)
 
 export const getAiInsight = (body) =>
-  api.post('/ai/test', body).then(r => r.data)
+  api.post('/ai/insight', body).then(r => r.data)
  

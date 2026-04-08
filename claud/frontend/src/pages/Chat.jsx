@@ -28,7 +28,10 @@ export default function Chat() {
 
     try {
       const data = await getAiInsight({ userQuery: q })
-      setMessages(prev => [...prev, { role: 'ai', text: data }])
+      // 백엔드가 plain string을 반환하므로 typeof로 분기
+      // (객체 응답 시 data.message 사용으로 향후 확장 대비)
+      const text = typeof data === 'string' ? data : (data?.message ?? '응답을 받지 못했어요.')
+      setMessages(prev => [...prev, { role: 'ai', text }])
     } catch {
       setMessages(prev => [...prev, { role: 'ai', text: '잠시 후 다시 시도해 주세요.' }])
     } finally {
