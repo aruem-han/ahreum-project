@@ -15,3 +15,9 @@ export const getCongestion = (stationId) =>
 export const getAiInsight = (body) =>
   api.post('/ai/insight', body).then(r => r.data)
  
+export const addFavorite = (stationId) =>
+  api.post(`/stations/favorites/${stationId}`).then(r => r.data)
+
+export const removeFavorite = (stationId) =>
+  api.delete(`/stations/favorites/${stationId}`).then(r => r.data)
+ 

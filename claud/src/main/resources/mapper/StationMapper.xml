@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.congestion.repository.StationRepository">
+   
+    <select id="findFavoriteStationIds" resultType="int">
+        SELECT station_id
+        FROM user_favorite
+    </select>
+
+    <insert id="addFavorite">
+        INSERT INTO user_favorite (station_id)
+        VALUES (#{stationId})
+    </insert>
+
+    <delete id="removeFavorite">
+        DELETE FROM user_favorite
+        WHERE station_id = #{stationId}
+    </delete>
+
+</mapper>

@@ -117,6 +117,10 @@ export default function Home() {
           <div style={styles.loadingWrap}>
             <div style={styles.loadingText}>불러오는 중...</div>
           </div>
+        ) : stations.length === 0 ? (
+          <div style={styles.emptyWrap}>
+            <div style={styles.emptyText}>등록된 즐겨찾기가 없습니다.</div>
+          </div>
         ) : (
           stations.map(station => (
             <StationCard key={station.id} station={station} />
@@ -236,6 +240,14 @@ const styles = {
   loadingText: {
     fontSize: 14,
     color: '#aaa',
+  },
+  emptyWrap: {
+    textAlign: 'center',
+    padding: '40px 0',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#888',
   },
   addBtn: {
     display: 'flex',
